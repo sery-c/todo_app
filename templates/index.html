@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <title>Todo App</title>
+        <style>
+            ul {
+                list-style: none;
+                width: 200px;
+            }
+            .hidden {
+                display: none;
+            }
+            li {
+                clear: both;
+            }
+            li button {
+                webkit-appearance: none;
+                border: none;
+                outline: none;
+                color: red;
+                float: right;
+                cursor: pointer;
+                font-size: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <form method="post" action="/todos/create">
+            <input type="text" name="desc" />
+            <input type="submit" value="Submit" />
+        </form>
+        <div id="error" class="hidden"> An error has occurred! </div>
+        <ul>
+            {% for d in data %}
+                <li><input class="check-completed" data-id="{{ d.id }}" type="checkbox" {% if d.completed %} checked {% endif %}/>
+                {{ d.description}}
+                <button class="delete-box" data-id="{{ d.id }}">&cross;</button>
+                </li>
+            {% endfor %}
+        </ul>
+        <script>
+            const checkboxes = document.querySelectorAll('.check-completed')
+            const deleteBoxes = document.querySelectorAll('.delete-box')
+            for (var i = 0; i < checkboxes.length; i++) {
+                var checkbox = checkboxes[i]
+                checkbox.onchange = function(event) {
+                    console.log('event', event);
+                    var isCompleted = event.target.checked;
+                    var todoId = event.target.dataset.id;
+                    fetch('/todos/' + todoId + '/set-completed', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            'completed': isCompleted
+                        }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(function(response) {
+                        if(response.ok === false) {
+                            errorDiv = document.getElementById('error');
+                            errorDiv.className = '';
+                            errorDiv.innerText = response.statusText;
+                            console.log(response);
+                        }
+                    })
+                }
+            }
+            for (var i = 0; i < deleteBoxes.length; i++) {
+                var deleteBox = deleteBoxes[i]
+                deleteBox.onclick = function(event) {
+                    console.log('event', event);
+                    var todoId = event.target.dataset.id;
+                    fetch('/todos/' + todoId, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(function(response) {
+                        if(response.ok === false) {
+                            errorDiv = document.getElementById('error');
+                            errorDiv.className = '';
+                            errorDiv.innerText = response.statusText;
+                            console.log(response);
+                        } else {
+                            location.reload();
+                        }
+                    })
+                }
+            }
+        </script>
+    </body>
+</html>
